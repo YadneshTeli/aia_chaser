@@ -7,6 +7,7 @@ import java.security.SecureRandom
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.Date
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -58,6 +59,12 @@ class Prober(
         socket.soTimeout = timeoutMs
 
         val sslSocket = socketFactory.createSocket(socket, host, port, true) as SSLSocket
+        try {
+            val params = sslSocket.sslParameters
+            params.serverNames = listOf(SNIHostName(host))
+            sslSocket.sslParameters = params
+        } catch (_: Exception) {}
+
         try {
             sslSocket.startHandshake()
         } catch (_: Exception) {

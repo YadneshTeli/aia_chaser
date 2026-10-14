@@ -31,16 +31,23 @@ class AiaDioAdapter implements HttpClientAdapter {
     try {
       return await _inner.fetch(options, requestStream, cancelFuture);
     } on DioException catch (e) {
+      final errStr = '${e.error} ${e.message}';
       final isHandshakeError = e.error is HandshakeException ||
+          e.error is TlsException ||
           e.type == DioExceptionType.badCertificate ||
-          (e.message?.contains('CERTIFICATE_VERIFY_FAILED') ?? false);
+          e.type == DioExceptionType.connectionError ||
+          errStr.contains('CERTIFICATE_VERIFY_FAILED') ||
+          errStr.contains('HandshakeException') ||
+          errStr.contains('Handshake error') ||
+          errStr.contains('certificate');
 
       if (!isHandshakeError || !policy.retryOnce) {
         rethrow;
       }
 
       // Check if we can validate the host via prewarm
-      final result = await AiaChaser.prewarm(host, port: options.uri.port);
+      final port = options.uri.hasPort ? options.uri.port : 443;
+      final result = await AiaChaser.prewarm(host, port: port);
 
       if (result.outcome == ValidationOutcome.validated ||
           result.outcome == ValidationOutcome.validatedByPin) {
