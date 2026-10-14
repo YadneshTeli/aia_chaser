@@ -160,7 +160,6 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             try {
                 val result = performValidation(host, leafDer, startTime)
                 val duration = (System.currentTimeMillis() - startTime)
-                result.durationMs = duration
 
                 // Cache verdict
                 val ttlMs = if (result.outcome == ValidationOutcome.VALIDATED ||
