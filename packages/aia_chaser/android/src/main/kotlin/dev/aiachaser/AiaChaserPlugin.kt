@@ -1,6 +1,8 @@
 package dev.aiachaser
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import java.io.ByteArrayInputStream
@@ -17,6 +19,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
 
     private var context: Context? = null
     private var flutterApi: AiaChaserFlutterApi? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val executor = Executors.newFixedThreadPool(4)
     private val certFactory = CertificateFactory.getInstance("X.509")
 
@@ -63,6 +66,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
         AiaChaserHostApi.setUp(binding.binaryMessenger, null)
         flutterApi = null
         context = null
+        mainHandler.removeCallbacksAndMessages(null)
         executor.shutdown()
     }
 
@@ -127,17 +131,16 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             val cached = validationCache[cacheKey]
             if (cached != null && cached.expiresAtMs > now) {
                 emitEvent("cache_hit", host, leafSha256, cached.outcome, 0, null)
-                callback(
-                    Result.success(
-                        ValidationResult(
-                            outcome = cached.outcome,
-                            chainSha256Hex = cached.chainSha256Hex,
-                            fetchedUrls = cached.fetchedUrls,
-                            durationMs = (System.currentTimeMillis() - startTime),
-                            detail = "In-memory cache hit"
-                        )
-                    )
+                val res = ValidationResult(
+                    outcome = cached.outcome,
+                    chainSha256Hex = cached.chainSha256Hex,
+                    fetchedUrls = cached.fetchedUrls,
+                    durationMs = (System.currentTimeMillis() - startTime),
+                    detail = "In-memory cache hit"
                 )
+                mainHandler.post {
+                    callback(Result.success(res))
+                }
                 return@execute
             }
 
@@ -287,8 +290,10 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             inFlightValidations.remove(cacheKey)
         } ?: return
 
-        for (cb in callbacks) {
-            cb(result)
+        mainHandler.post {
+            for (cb in callbacks) {
+                cb(result)
+            }
         }
     }
 
@@ -299,17 +304,16 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
                 val probe = prober.captureServerChain(host, port.toInt(), 5000)
                 val leaf = probe.leafCert
                 if (leaf == null) {
-                    callback(
-                        Result.success(
-                            ValidationResult(
-                                outcome = ValidationOutcome.NO_CERTIFICATE,
-                                chainSha256Hex = emptyList(),
-                                fetchedUrls = emptyList(),
-                                durationMs = (System.currentTimeMillis() - startTime),
-                                detail = "Prewarm failed: no certificate presented by $host:$port"
-                            )
-                        )
+                    val res = ValidationResult(
+                        outcome = ValidationOutcome.NO_CERTIFICATE,
+                        chainSha256Hex = emptyList(),
+                        fetchedUrls = emptyList(),
+                        durationMs = (System.currentTimeMillis() - startTime),
+                        detail = "Prewarm failed: no certificate presented by $host:$port"
                     )
+                    mainHandler.post {
+                        callback(Result.success(res))
+                    }
                     return@execute
                 }
 
@@ -320,17 +324,16 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
                 )
                 validate(req, callback)
             } catch (e: Exception) {
-                callback(
-                    Result.success(
-                        ValidationResult(
-                            outcome = ValidationOutcome.AIA_UNAVAILABLE,
-                            chainSha256Hex = emptyList(),
-                            fetchedUrls = emptyList(),
-                            durationMs = (System.currentTimeMillis() - startTime),
-                            detail = "Prewarm connection error: ${e.message}"
-                        )
-                    )
+                val res = ValidationResult(
+                    outcome = ValidationOutcome.AIA_UNAVAILABLE,
+                    chainSha256Hex = emptyList(),
+                    fetchedUrls = emptyList(),
+                    durationMs = (System.currentTimeMillis() - startTime),
+                    detail = "Prewarm connection error: ${e.message}"
                 )
+                mainHandler.post {
+                    callback(Result.success(res))
+                }
             }
         }
     }
@@ -339,9 +342,13 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
         executor.execute {
             try {
                 val report = prober.diagnose(host, port.toInt(), timeoutMs.toInt())
-                callback(Result.success(report))
+                mainHandler.post {
+                    callback(Result.success(report))
+                }
             } catch (e: Exception) {
-                callback(Result.failure(e))
+                mainHandler.post {
+                    callback(Result.failure(e))
+                }
             }
         }
     }
@@ -383,7 +390,9 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             durationMs = durationMs,
             detailJson = detail
         )
-        flutterApi?.onNativeEvent(event) {}
+        mainHandler.post {
+            flutterApi?.onNativeEvent(event) {}
+        }
     }
 
     private fun sha256Hex(bytes: ByteArray): String {
