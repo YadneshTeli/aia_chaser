@@ -17,16 +17,26 @@ class TrustValidator(
     private val trustUserCaCerts: Boolean = true
 ) {
 
-    private val trustManager: X509TrustManager
-    private val trustManagerExtensions: X509TrustManagerExtensions
+    private val trustManager: X509TrustManager?
+    private val trustManagerExtensions: X509TrustManagerExtensions?
 
     init {
-        val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        tmf.init(null as KeyStore?)
-        val tm = tmf.trustManagers.firstOrNull { it is X509TrustManager } as? X509TrustManager
-            ?: throw IllegalStateException("No X509TrustManager available in platform")
+        var tm: X509TrustManager? = null
+        var tme: X509TrustManagerExtensions? = null
+        try {
+            val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            tmf.init(null as KeyStore?)
+            tm = tmf.trustManagers.firstOrNull { it is X509TrustManager } as? X509TrustManager
+            if (tm != null) {
+                try {
+                    tme = X509TrustManagerExtensions(tm)
+                } catch (_: Exception) {
+                    // Fallback to standard X509TrustManager if Conscrypt extensions are unavailable
+                }
+            }
+        } catch (_: Exception) {}
         trustManager = tm
-        trustManagerExtensions = X509TrustManagerExtensions(trustManager)
+        trustManagerExtensions = tme
     }
 
     sealed class TrustResult {
@@ -48,8 +58,15 @@ class TrustValidator(
         val chainArray = chain.toTypedArray()
 
         return try {
-            val verified = trustManagerExtensions.checkServerTrusted(chainArray, authType, host)
-            TrustResult.Trusted(verified)
+            val tme = trustManagerExtensions
+            if (tme != null) {
+                val verified = tme.checkServerTrusted(chainArray, authType, host)
+                TrustResult.Trusted(verified)
+            } else {
+                val tm = trustManager ?: return TrustResult.Untrusted("No system TrustManager available")
+                tm.checkServerTrusted(chainArray, authType)
+                TrustResult.Trusted(chain.toList())
+            }
         } catch (e: CertificateException) {
             TrustResult.Untrusted("System trust evaluation failed: ${e.message}", e)
         } catch (e: Exception) {

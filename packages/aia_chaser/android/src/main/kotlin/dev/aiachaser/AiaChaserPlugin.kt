@@ -47,11 +47,16 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
         flutterApi = AiaChaserFlutterApi(binding.binaryMessenger)
         AiaChaserHostApi.setUp(binding.binaryMessenger, this)
 
-        val cacheDir = binding.applicationContext.cacheDir
-        val cache = DiskIssuerCache(cacheDir)
-        diskCache = cache
-        chainBuilder = ChainBuilder(fetcher, cache, seedCertificates)
-        prober = Prober(chainBuilder, trustValidator)
+        try {
+            val cacheDir = binding.applicationContext.cacheDir
+            val cache = DiskIssuerCache(cacheDir)
+            diskCache = cache
+            chainBuilder = ChainBuilder(fetcher, cache, seedCertificates)
+            prober = Prober(chainBuilder, trustValidator)
+        } catch (_: Exception) {
+            chainBuilder = ChainBuilder(fetcher, null, seedCertificates)
+            prober = Prober(chainBuilder, trustValidator)
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
