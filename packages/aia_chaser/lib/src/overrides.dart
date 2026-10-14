@@ -29,6 +29,12 @@ class AiaHttpOverrides extends HttpOverrides {
       return true;
     }
 
+    // 1b. If the host is already verified, accept this certificate in the chain
+    if (engine.store.isHostValidated(host)) {
+      engine.store.put(host, leafSha256, ValidationOutcome.validated);
+      return true;
+    }
+
     // 2. Pin fallback check
     if (policy.onFailure.type == FailurePolicyType.pinFallback) {
       for (final pin in policy.onFailure.pins) {

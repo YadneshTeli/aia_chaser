@@ -139,11 +139,20 @@ class AiaEngine implements AiaChaserFlutterApi {
           ttl: _config.cache.validationTtl,
           detail: result.detail,
         );
+        for (final certHash in result.chainSha256Hex) {
+          store.put(
+            host,
+            certHash,
+            result.outcome,
+            ttl: _config.cache.validationTtl,
+            detail: result.detail,
+          );
+        }
       }
 
       completer.complete(result);
       if (kDebugMode) {
-        debugPrint('[AiaChaser] Validation completed for $host -> ${result.outcome} (${result.durationMs}ms)');
+        debugPrint('[AiaChaser] Validation completed for $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
       }
     }).catchError((error, stackTrace) {
       completer.completeError(error, stackTrace);
@@ -174,21 +183,22 @@ class AiaEngine implements AiaChaserFlutterApi {
   Future<ValidationResult> prewarm(String host, {int port = 443}) async {
     final result = await _hostApi.prewarm(host, port);
     if (result.chainSha256Hex.isNotEmpty) {
-      final leafHash = result.chainSha256Hex.first;
       if (result.outcome == ValidationOutcome.validated ||
           result.outcome == ValidationOutcome.validatedByPin) {
-        store.put(
-          host,
-          leafHash,
-          result.outcome,
-          ttl: _config.cache.validationTtl,
-          detail: result.detail,
-        );
+        for (final certHash in result.chainSha256Hex) {
+          store.put(
+            host,
+            certHash,
+            result.outcome,
+            ttl: _config.cache.validationTtl,
+            detail: result.detail,
+          );
+        }
       }
     }
 
     if (kDebugMode) {
-      debugPrint('[AiaChaser] Prewarmed $host -> ${result.outcome} (${result.durationMs}ms)');
+      debugPrint('[AiaChaser] Prewarmed $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
     }
 
     _eventsController.add(AiaEvent(

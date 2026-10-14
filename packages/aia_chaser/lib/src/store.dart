@@ -40,6 +40,17 @@ class ValidatedLeafStore {
     return verdict.isValidated;
   }
 
+  /// Returns true if any certificate for [host] is recorded as trusted and unexpired.
+  bool isHostValidated(String host) {
+    final prefix = '${host.trim().toLowerCase()}:';
+    for (final entry in _store.entries) {
+      if (entry.key.startsWith(prefix) && entry.value.isValidated) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Returns the stored outcome if present and fresh, or null.
   ValidationOutcome? getOutcome(String host, String leafSha256Hex) {
     final key = _buildKey(host, leafSha256Hex);

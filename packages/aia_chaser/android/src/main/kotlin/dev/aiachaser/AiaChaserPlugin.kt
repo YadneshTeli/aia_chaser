@@ -191,7 +191,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
 
     private fun performValidation(host: String, leafDer: ByteArray, startTime: Long): ValidationResult {
         // Parse leaf
-        val leaf = try {
+        val cert = try {
             certFactory.generateCertificate(ByteArrayInputStream(leafDer)) as? X509Certificate
                 ?: throw Exception("Not an X.509 certificate")
         } catch (_: Exception) {
@@ -204,33 +204,49 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             )
         }
 
-        // Hostname check (SAN)
-        if (!HostnameMatcher.verify(host, leaf)) {
+        // Check if Dart passed an intermediate CA certificate rather than an end-entity leaf
+        val isCaCert = cert.basicConstraints >= 0
+        val targetLeaf: X509Certificate
+        if (isCaCert) {
+            // Dart passed an intermediate CA certificate (whose signature failed system trust).
+            // Probe the host with SNI to obtain the true end-entity leaf certificate and complete server chain.
+            val probe = try {
+                prober.captureServerChain(host, 443, 5000)
+            } catch (_: Exception) {
+                null
+            }
+            targetLeaf = probe?.leafCert ?: cert
+        } else {
+            targetLeaf = cert
+        }
+
+        // Hostname check (SAN) on the actual end-entity leaf
+        if (!HostnameMatcher.verify(host, targetLeaf)) {
             return ValidationResult(
                 outcome = ValidationOutcome.REJECTED_HOSTNAME,
                 chainSha256Hex = listOf(sha256Hex(leafDer)),
                 fetchedUrls = emptyList(),
                 durationMs = (System.currentTimeMillis() - startTime),
-                detail = "Hostname '$host' does not match certificate SANs: ${HostnameMatcher.getSans(leaf)}"
+                detail = "Hostname '$host' does not match certificate SANs: ${HostnameMatcher.getSans(targetLeaf)}"
             )
         }
 
         // Validity check
         val now = Date()
-        if (now.before(leaf.notBefore) || now.after(leaf.notAfter)) {
+        if (now.before(targetLeaf.notBefore) || now.after(targetLeaf.notAfter)) {
             return ValidationResult(
                 outcome = ValidationOutcome.REJECTED_EXPIRED,
                 chainSha256Hex = listOf(sha256Hex(leafDer)),
                 fetchedUrls = emptyList(),
                 durationMs = (System.currentTimeMillis() - startTime),
-                detail = "Certificate validity error: valid from ${leaf.notBefore} to ${leaf.notAfter}"
+                detail = "Certificate validity error: valid from ${targetLeaf.notBefore} to ${targetLeaf.notAfter}"
             )
         }
 
-        // Try system trust on leaf alone first
-        val directTrust = trustValidator.validateSystemTrust(listOf(leaf), host)
+        // Try system trust on targetLeaf alone first
+        val directTrust = trustValidator.validateSystemTrust(listOf(targetLeaf), host)
         if (directTrust is TrustValidator.TrustResult.Trusted) {
-            val hashes = directTrust.fullChain.map { sha256Hex(it.encoded) }
+            val hashes = (directTrust.fullChain.map { sha256Hex(it.encoded) } + sha256Hex(leafDer)).distinct()
             return ValidationResult(
                 outcome = ValidationOutcome.VALIDATED,
                 chainSha256Hex = hashes,
@@ -241,9 +257,9 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
         }
 
         // Build chain via AIA
-        val buildResult = chainBuilder.buildChain(leaf, host)
+        val buildResult = chainBuilder.buildChain(targetLeaf, host)
         val fullChain = buildResult.chain
-        val chainHashes = fullChain.map { sha256Hex(it.encoded) }
+        val chainHashes = (fullChain.map { sha256Hex(it.encoded) } + sha256Hex(leafDer)).distinct()
 
         // Evaluate system trust on completed chain
         val trustCheck = trustValidator.validateSystemTrust(fullChain, host)
