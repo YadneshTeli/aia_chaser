@@ -42,7 +42,8 @@ void main(List<String> args) async {
       await request.response.close();
     } else if (path == '/redirect_private') {
       // Attempt SSRF redirect to internal link-local / AWS metadata
-      request.response.redirect(Uri.parse('http://169.254.169.254/latest/meta-data/'));
+      request.response
+          .redirect(Uri.parse('http://169.254.169.254/latest/meta-data/'));
     } else {
       request.response.statusCode = HttpStatus.notFound;
       request.response.write('Not found');

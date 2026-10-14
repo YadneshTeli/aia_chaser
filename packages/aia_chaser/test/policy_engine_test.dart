@@ -11,7 +11,8 @@ void main() {
         .setMockMessageHandler(
       'dev.flutter.pigeon.aia_chaser.AiaChaserHostApi.configure',
       (ByteData? message) async {
-        return AiaChaserHostApi.pigeonChannelCodec.encodeMessage(<Object?>[null]);
+        return AiaChaserHostApi.pigeonChannelCodec
+            .encodeMessage(<Object?>[null]);
       },
     );
   });
@@ -80,7 +81,8 @@ void main() {
         },
       );
 
-      expect(() => config.validate(), throwsA(isA<AiaConfigurationException>()));
+      expect(
+          () => config.validate(), throwsA(isA<AiaConfigurationException>()));
     });
   });
 }

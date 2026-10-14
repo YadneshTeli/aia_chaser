@@ -58,7 +58,8 @@ class AiaDioAdapter implements HttpClientAdapter {
         // Retry with a fresh stream if data was buffered
         Stream<Uint8List>? retryStream;
         if (options.data is List<int>) {
-          retryStream = Stream.value(Uint8List.fromList(options.data as List<int>));
+          retryStream =
+              Stream.value(Uint8List.fromList(options.data as List<int>));
         }
 
         return await _inner.fetch(options, retryStream, cancelFuture);

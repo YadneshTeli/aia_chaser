@@ -8,7 +8,6 @@ import 'package:pigeon/pigeon.dart';
   swiftOut: 'ios/Classes/GeneratedApi.swift',
   swiftOptions: SwiftOptions(),
 ))
-
 enum ValidationOutcome {
   validated,
   validatedByPin,

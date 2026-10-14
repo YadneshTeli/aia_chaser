@@ -9,7 +9,8 @@ void main(List<String> args) async {
   final keyFile = File('tool/fixtures/certs/leaf_key.pem');
 
   if (!await leafCertFile.exists() || !await keyFile.exists()) {
-    print('[BrokenChainServer] Certificate files not found at tool/fixtures/certs/.');
+    print(
+        '[BrokenChainServer] Certificate files not found at tool/fixtures/certs/.');
     print('[BrokenChainServer] Run generate_certs script to produce fixtures.');
     return;
   }
@@ -25,7 +26,8 @@ void main(List<String> args) async {
   );
 
   print('[BrokenChainServer] TLS server listening on https://127.0.0.1:$port');
-  print('[BrokenChainServer] Serving incomplete certificate chain (leaf only).');
+  print(
+      '[BrokenChainServer] Serving incomplete certificate chain (leaf only).');
 
   await for (SecureSocket client in server) {
     client.listen(

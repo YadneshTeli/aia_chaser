@@ -28,7 +28,8 @@ class AiaHttpClient extends http.BaseClient {
       return await _inner.send(request);
     } catch (e) {
       final isHandshakeError = e is HandshakeException ||
-          e is http.ClientException && e.message.contains('CERTIFICATE_VERIFY_FAILED') ||
+          e is http.ClientException &&
+              e.message.contains('CERTIFICATE_VERIFY_FAILED') ||
           e.toString().contains('CERTIFICATE_VERIFY_FAILED');
 
       if (!isHandshakeError || !policy.retryOnce) {
@@ -49,7 +50,8 @@ class AiaHttpClient extends http.BaseClient {
     }
   }
 
-  http.BaseRequest _recreateRequest(http.BaseRequest original, List<int>? bodyBytes) {
+  http.BaseRequest _recreateRequest(
+      http.BaseRequest original, List<int>? bodyBytes) {
     if (original is http.Request) {
       final req = http.Request(original.method, original.url)
         ..headers.addAll(original.headers)

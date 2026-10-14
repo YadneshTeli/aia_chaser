@@ -3,7 +3,8 @@ import 'package:aia_chaser/aia_chaser.dart';
 
 void main() {
   group('ValidatedLeafStore', () {
-    test('records and returns validated verdicts for exact host and leaf hash', () {
+    test('records and returns validated verdicts for exact host and leaf hash',
+        () {
       final store = ValidatedLeafStore();
       const host = 'api.example.com';
       const leafHash = '4a2f8b1c9e3a7c5d';

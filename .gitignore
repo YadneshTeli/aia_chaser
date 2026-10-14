@@ -21,13 +21,13 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-.dart_tool/
+**/.dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
-/build/
+**/build/
 
 # Android related
 **/android/**/gradle-wrapper.jar

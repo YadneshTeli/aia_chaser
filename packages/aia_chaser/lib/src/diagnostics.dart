@@ -92,7 +92,8 @@ extension ChainReportFormatting on ChainReport {
   }
 
   String toJsonString({bool pretty = true}) {
-    final encoder = pretty ? const JsonEncoder.withIndent('  ') : const JsonEncoder();
+    final encoder =
+        pretty ? const JsonEncoder.withIndent('  ') : const JsonEncoder();
     return encoder.convert(toRedactedJson());
   }
 }

@@ -220,6 +220,14 @@ class AiaEngine implements AiaChaserFlutterApi {
     ));
   }
 
+  /// Resets configuration and clears in-memory state.
+  void reset() {
+    _config = const AiaConfig(hosts: {});
+    _initialized = false;
+    store.clear();
+    _inFlight.clear();
+  }
+
   void dispose() {
     _eventsController.close();
   }

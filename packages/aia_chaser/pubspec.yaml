@@ -32,3 +32,5 @@ flutter:
       android:
         package: dev.aiachaser
         pluginClass: AiaChaserPlugin
+      ios:
+        pluginClass: AiaChaserPlugin

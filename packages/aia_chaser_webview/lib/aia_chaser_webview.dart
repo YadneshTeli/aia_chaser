@@ -57,7 +57,8 @@ class AiaWebViewHandler {
 
         if (result.outcome == ValidationOutcome.validated ||
             result.outcome == ValidationOutcome.validatedByPin) {
-          debugPrint('[AiaChaser WebView] Successfully validated chain for "$host". Proceeding.');
+          debugPrint(
+              '[AiaChaser WebView] Successfully validated chain for "$host". Proceeding.');
           androidError.proceed();
         } else {
           debugPrint(

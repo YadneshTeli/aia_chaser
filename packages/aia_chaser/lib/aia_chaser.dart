@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 import 'src/config.dart';
 import 'src/engine.dart';
@@ -20,7 +21,8 @@ export 'src/pfn/aia_api.g.dart'
         ValidationResult;
 export 'src/engine.dart' show AiaEngine;
 export 'src/store.dart' show ValidatedLeafStore;
-export 'src/ui/aia_diagnostics_view.dart' show AiaDiagnosticsView, AiaThemeColors;
+export 'src/ui/aia_diagnostics_view.dart'
+    show AiaDiagnosticsView, AiaThemeColors;
 
 /// Main entry point for the AIA Chaser plugin ecosystem.
 class AiaChaser {
@@ -32,9 +34,24 @@ class AiaChaser {
   /// Stream of real-time diagnostic and validation events.
   static Stream<AiaEvent> get events => _engine.events;
 
+  /// Prepares a background isolate to communicate with the AIA Chaser native engine.
+  ///
+  /// Must be called with [RootIsolateToken.instance!] before calling [AiaChaser.initialize]
+  /// or making requests in a spawned background isolate (e.g. compute() or background workers).
+  static void registerBackgroundIsolate(RootIsolateToken rootIsolateToken) {
+    BackgroundIsolateBinaryMessenger.ensureInitialized(rootIsolateToken);
+  }
+
   /// Configures and initializes AIA Chaser.
   static Future<void> initialize(AiaConfig config) async {
     _engine.initialize(config);
+  }
+
+  /// Resets configuration, active validation state, and memory cache.
+  ///
+  /// Useful in testing and test isolation.
+  static void reset() {
+    _engine.reset();
   }
 
   /// Diagnoses the SSL/TLS certificate chain for [host] and returns a detailed [ChainReport].
