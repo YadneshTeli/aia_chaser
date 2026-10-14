@@ -12,6 +12,8 @@ environment:
 resolution: workspace
 
 dependencies:
+  flutter:
+    sdk: flutter
   aia_chaser:
     path: ../aia_chaser
   dio: ^5.7.0
