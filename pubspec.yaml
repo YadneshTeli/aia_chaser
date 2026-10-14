@@ -3,7 +3,29 @@ description: Workspace repository for the aia_chaser Flutter plugin ecosystem.
 publish_to: none
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
+
+workspace:
+  - packages/aia_chaser
+  - packages/aia_chaser_webview
+  - packages/aia_chaser_dio
+  - packages/aia_chaser_http
 
 dev_dependencies:
   melos: ^8.9.0
+
+melos:
+  scripts:
+    analyze:
+      exec: flutter analyze
+      description: Run flutter analyze across all packages.
+
+    test:
+      exec: flutter test
+      packageFilters:
+        dirExists: test
+      description: Run flutter test in packages with a test folder.
+
+    pigeon:
+      run: dart run pigeon --input packages/aia_chaser/pigeons/aia_api.dart
+      description: Regenerate Pigeon IPC bindings for Android and Dart.
