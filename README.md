@@ -1,6 +1,6 @@
 # AIA Chaser Monorepo
 
-[![CI Pipeline](https://github.com/aiachaser/aia_chaser/actions/workflows/ci.yml/badge.svg)](https://github.com/aiachaser/aia_chaser/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/YadneshTeli/aia_chaser/actions/workflows/ci.yml/badge.svg)](https://github.com/YadneshTeli/aia_chaser/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg)](https://github.com/invertase/melos)
 

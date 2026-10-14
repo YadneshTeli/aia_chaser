@@ -58,3 +58,10 @@ migrate_working_dir/
 # Exceptions to ignore rules for dart packages
 !**/packages/**/pubspec.lock
 !**/example/pubspec.lock
+
+AIA-Chaser/aia-chaser-app-flow.md
+AIA-Chaser/aia-chaser-backend-schema.md
+AIA-Chaser/aia-chaser-implementation-plan.md
+AIA-Chaser/aia-chaser-prd.md
+AIA-Chaser/aia-chaser-trd.md
+AIA-Chaser/aia-chaser-uiux-brief.md

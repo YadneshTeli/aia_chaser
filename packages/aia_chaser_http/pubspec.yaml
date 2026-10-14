@@ -2,8 +2,9 @@ name: aia_chaser_http
 description: package:http client adapter for aia_chaser, enabling scoped AIA intermediate certificate chasing and transparent retry-once.
 version: 0.1.0-alpha.1
 publish_to: none
-homepage: https://github.com/aiachaser/aia_chaser
-repository: https://github.com/aiachaser/aia_chaser
+homepage: https://github.com/YadneshTeli/aia_chaser
+repository: https://github.com/YadneshTeli/aia_chaser/tree/master/packages/aia_chaser_http
+issue_tracker: https://github.com/YadneshTeli/aia_chaser/issues
 license: BSD-3-Clause
 
 environment:
