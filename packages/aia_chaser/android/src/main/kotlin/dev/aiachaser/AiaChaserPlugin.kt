@@ -26,7 +26,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
     private var fetcher = AiaFetcher()
     private var diskCache: DiskIssuerCache? = null
     private var trustValidator = TrustValidator()
-    private var chainBuilder = ChainBuilder(fetcher, null, emptyList())
+    private var chainBuilder = ChainBuilder(fetcher, null, emptyList(), trustValidator)
     private var prober = Prober(chainBuilder, trustValidator)
 
     private val seedCertificates = mutableListOf<X509Certificate>()
@@ -54,10 +54,10 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             val cacheDir = binding.applicationContext.cacheDir
             val cache = DiskIssuerCache(cacheDir)
             diskCache = cache
-            chainBuilder = ChainBuilder(fetcher, cache, seedCertificates)
+            chainBuilder = ChainBuilder(fetcher, cache, seedCertificates, trustValidator)
             prober = Prober(chainBuilder, trustValidator)
         } catch (_: Exception) {
-            chainBuilder = ChainBuilder(fetcher, null, seedCertificates)
+            chainBuilder = ChainBuilder(fetcher, null, seedCertificates, trustValidator)
             prober = Prober(chainBuilder, trustValidator)
         }
     }
@@ -111,6 +111,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             fetcher = fetcher,
             diskCache = diskCache,
             seedCertificates = seedCertificates,
+            trustValidator = trustValidator,
             maxDepth = fetchOpts.maxDepth.toInt()
         )
         prober = Prober(chainBuilder, trustValidator)
@@ -240,7 +241,7 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
         }
 
         // Build chain via AIA
-        val buildResult = chainBuilder.buildChain(leaf)
+        val buildResult = chainBuilder.buildChain(leaf, host)
         val fullChain = buildResult.chain
         val chainHashes = fullChain.map { sha256Hex(it.encoded) }
 

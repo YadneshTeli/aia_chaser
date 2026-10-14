@@ -140,7 +140,7 @@ class Prober(
         }
 
         // Build chain via AIA
-        val buildResult = chainBuilder.buildChain(leaf)
+        val buildResult = chainBuilder.buildChain(leaf, host)
         val completedCerts = buildResult.chain
 
         // Validate completed chain against system trust

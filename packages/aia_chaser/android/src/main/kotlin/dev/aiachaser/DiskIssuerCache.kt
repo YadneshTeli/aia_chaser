@@ -50,17 +50,18 @@ class DiskIssuerCache(private val cacheDir: File) {
         val urlHash = sha256Hex(url.toByteArray(Charsets.UTF_8))
         val certBytes = cert.encoded
         val certSha256 = sha256Hex(certBytes)
-        val derFile = File(baseDir, "$urlHash.der")
+        val entryKey = "${urlHash}_${certSha256.take(16)}"
+        val derFile = File(baseDir, "$entryKey.der")
 
         // Atomic write to temp file then rename
-        val tmpFile = File(baseDir, "$urlHash.der.tmp")
+        val tmpFile = File(baseDir, "$entryKey.der.tmp")
         try {
             FileOutputStream(tmpFile).use { fos ->
                 fos.write(certBytes)
             }
             if (tmpFile.renameTo(derFile)) {
                 val entry = CacheEntry(
-                    urlHash = urlHash,
+                    urlHash = entryKey,
                     url = url,
                     certSha256 = certSha256,
                     subjectDn = cert.subjectX500Principal.name,
@@ -69,7 +70,7 @@ class DiskIssuerCache(private val cacheDir: File) {
                     fetchedAt = System.currentTimeMillis(),
                     sizeBytes = certBytes.size.toLong()
                 )
-                entries[urlHash] = entry
+                entries[entryKey] = entry
                 enforceLimits()
                 saveIndex()
             }

@@ -13,6 +13,7 @@ class ChainBuilder(
     private val fetcher: AiaFetcher,
     private val diskCache: DiskIssuerCache? = null,
     private val seedCertificates: List<X509Certificate> = emptyList(),
+    private val trustValidator: TrustValidator? = null,
     private val maxDepth: Int = 4
 ) {
 
@@ -139,10 +140,124 @@ class ChainBuilder(
     /**
      * Builds the certificate chain starting from [leaf], resolving missing issuers
      * from seeds, disk cache, and AIA network endpoints up to [maxDepth].
+     *
+     * Prioritizes paths that reach a trusted system anchor, exploring cross-certificates
+     * before self-issued roots to handle modern CAs on legacy trust stores.
      */
-    fun buildChain(leaf: X509Certificate): BuildResult {
-        val currentChain = mutableListOf<X509Certificate>(leaf)
+    fun buildChain(leaf: X509Certificate, host: String? = null): BuildResult {
         val fetchedUrls = mutableListOf<String>()
+        val visitedCertHashes = mutableSetOf<String>()
+
+        // 1. Try path exploration to reach a verified system trust anchor
+        val trustedChain = findTrustedPath(
+            currentChain = listOf(leaf),
+            host = host,
+            fetchedUrls = fetchedUrls,
+            visitedHashes = visitedCertHashes,
+            depth = 0
+        )
+
+        if (trustedChain != null) {
+            return BuildResult(
+                chain = trustedChain,
+                fetchedUrls = fetchedUrls.distinct(),
+                isSelfSigned = isSelfIssued(trustedChain.last()),
+                hitMaxDepth = false
+            )
+        }
+
+        // 2. Fallback: linear accumulation so detailed diagnostics and reasons can be reported
+        return buildLinearChain(leaf, fetchedUrls)
+    }
+
+    private fun findTrustedPath(
+        currentChain: List<X509Certificate>,
+        host: String?,
+        fetchedUrls: MutableList<String>,
+        visitedHashes: MutableSet<String>,
+        depth: Int
+    ): List<X509Certificate>? {
+        val top = currentChain.last()
+        visitedHashes.add(sha256Hex(top))
+
+        // Check if current chain is trusted by system trust store
+        if (trustValidator != null && !host.isNullOrEmpty()) {
+            val check = trustValidator.validateSystemTrust(currentChain, host)
+            if (check is TrustValidator.TrustResult.Trusted || check is TrustValidator.TrustResult.Pinned) {
+                return currentChain
+            }
+        }
+
+        if (depth >= maxDepth) {
+            return null
+        }
+
+        if (isSelfIssued(top)) {
+            // Self-signed certificate that failed trust validation; dead end
+            return null
+        }
+
+        val candidates = mutableListOf<X509Certificate>()
+
+        // 1. Check seeds
+        for (seed in seedCertificates) {
+            if (isValidIssuer(top, seed)) {
+                candidates.add(seed)
+            }
+        }
+
+        // 2. Check disk cache
+        if (diskCache != null) {
+            val cached = diskCache.findBySubject(top.issuerX500Principal.name)
+            for (c in cached) {
+                if (isValidIssuer(top, c)) {
+                    candidates.add(c)
+                }
+            }
+        }
+
+        // 3. Fetch from AIA caIssuers URLs
+        val aiaUrls = extractCaIssuersUrls(top)
+        for (url in aiaUrls) {
+            if (!fetchedUrls.contains(url)) {
+                fetchedUrls.add(url)
+            }
+            try {
+                val fetched = fetcher.fetchCertificates(url)
+                for (c in fetched) {
+                    if (isValidIssuer(top, c)) {
+                        diskCache?.put(url, c)
+                        candidates.add(c)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        // Deduplicate and filter out loop candidates
+        val uniqueCandidates = candidates.distinctBy { sha256Hex(it) }
+            .filter { !visitedHashes.contains(sha256Hex(it)) }
+
+        // Prioritize cross-certificates (isSelfIssued == false) before self-issued roots (isSelfIssued == true)
+        val sortedCandidates = uniqueCandidates.sortedBy { isSelfIssued(it) }
+
+        for (candidate in sortedCandidates) {
+            val path = findTrustedPath(
+                currentChain = currentChain + candidate,
+                host = host,
+                fetchedUrls = fetchedUrls,
+                visitedHashes = visitedHashes.toMutableSet(),
+                depth = depth + 1
+            )
+            if (path != null) {
+                return path
+            }
+        }
+
+        return null
+    }
+
+    private fun buildLinearChain(leaf: X509Certificate, fetchedUrls: MutableList<String>): BuildResult {
+        val currentChain = mutableListOf<X509Certificate>(leaf)
         val visitedCertHashes = mutableSetOf<String>()
         visitedCertHashes.add(sha256Hex(leaf))
 
@@ -152,22 +267,19 @@ class ChainBuilder(
         while (depth < maxDepth) {
             val top = currentChain.last()
 
-            // If the certificate is self-signed / self-issued, chain completion cannot go further
             if (isSelfIssued(top)) {
                 return BuildResult(
                     chain = currentChain,
-                    fetchedUrls = fetchedUrls,
+                    fetchedUrls = fetchedUrls.distinct(),
                     isSelfSigned = true,
                     hitMaxDepth = false
                 )
             }
 
-            // 1. Check if candidate is already in seed pool or disk cache
             val issuerFromPool = findIssuerInPool(top)
             if (issuerFromPool != null) {
                 val hash = sha256Hex(issuerFromPool)
                 if (visitedCertHashes.contains(hash)) {
-                    // Loop detected
                     break
                 }
                 visitedCertHashes.add(hash)
@@ -176,19 +288,20 @@ class ChainBuilder(
                 continue
             }
 
-            // 2. Extract AIA caIssuers URLs
             val aiaUrls = extractCaIssuersUrls(top)
             if (aiaUrls.isEmpty()) {
-                // No AIA URLs available
                 break
             }
 
             var resolvedNewIssuer = false
             for (url in aiaUrls) {
-                try {
+                if (!fetchedUrls.contains(url)) {
                     fetchedUrls.add(url)
+                }
+                try {
                     val fetchedCerts = fetcher.fetchCertificates(url)
-                    for (candidate in fetchedCerts) {
+                    val sorted = fetchedCerts.sortedBy { isSelfIssued(it) }
+                    for (candidate in sorted) {
                         if (isValidIssuer(top, candidate)) {
                             diskCache?.put(url, candidate)
                             val hash = sha256Hex(candidate)
@@ -201,9 +314,7 @@ class ChainBuilder(
                         }
                     }
                     if (resolvedNewIssuer) break
-                } catch (_: Exception) {
-                    // Try next AIA URL if multiple are provided
-                }
+                } catch (_: Exception) {}
             }
 
             if (!resolvedNewIssuer) {
@@ -219,7 +330,7 @@ class ChainBuilder(
 
         return BuildResult(
             chain = currentChain,
-            fetchedUrls = fetchedUrls,
+            fetchedUrls = fetchedUrls.distinct(),
             isSelfSigned = isSelfIssued(currentChain.last()),
             hitMaxDepth = hitMaxDepth
         )
