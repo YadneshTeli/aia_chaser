@@ -26,13 +26,13 @@ class AiaEngine implements AiaChaserFlutterApi {
     AiaChaserFlutterApi.setUp(this);
   }
 
-  void initialize(AiaConfig config) {
+  Future<void> initialize(AiaConfig config) async {
     config.validate();
     _config = config;
     _initialized = true;
 
     // Send native configuration
-    _hostApi.configure(NativeConfig(
+    await _hostApi.configure(NativeConfig(
       fetch: NativeFetchOptions(
         connectTimeoutMs: config.fetch.connectTimeout.inMilliseconds,
         readTimeoutMs: config.fetch.readTimeout.inMilliseconds,
@@ -52,7 +52,10 @@ class AiaEngine implements AiaChaserFlutterApi {
 
     // Handle prewarm
     if (config.prewarm != PrewarmMode.none) {
-      _executePrewarm(config.prewarm == PrewarmMode.awaitCompletion);
+      final future = _executePrewarm(config.prewarm == PrewarmMode.awaitCompletion);
+      if (config.prewarm == PrewarmMode.awaitCompletion) {
+        await future;
+      }
     }
   }
 
@@ -139,6 +142,9 @@ class AiaEngine implements AiaChaserFlutterApi {
       }
 
       completer.complete(result);
+      if (kDebugMode) {
+        debugPrint('[AiaChaser] Validation completed for $host -> ${result.outcome} (${result.durationMs}ms)');
+      }
     }).catchError((error, stackTrace) {
       completer.completeError(error, stackTrace);
     }).whenComplete(() {
@@ -152,6 +158,17 @@ class AiaEngine implements AiaChaserFlutterApi {
   Future<ValidationResult>? getInFlight(String host, String leafSha256) {
     final key = '${host.trim().toLowerCase()}:$leafSha256';
     return _inFlight[key];
+  }
+
+  /// Checks if any active in-flight validation exists for this host.
+  Future<ValidationResult>? getInFlightForHost(String host) {
+    final prefix = '${host.trim().toLowerCase()}:';
+    for (final entry in _inFlight.entries) {
+      if (entry.key.startsWith(prefix)) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
   Future<ValidationResult> prewarm(String host, {int port = 443}) async {
@@ -168,6 +185,10 @@ class AiaEngine implements AiaChaserFlutterApi {
           detail: result.detail,
         );
       }
+    }
+
+    if (kDebugMode) {
+      debugPrint('[AiaChaser] Prewarmed $host -> ${result.outcome} (${result.durationMs}ms)');
     }
 
     _eventsController.add(AiaEvent(

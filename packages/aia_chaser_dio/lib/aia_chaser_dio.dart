@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:aia_chaser/aia_chaser.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 
 /// A custom [HttpClientAdapter] for Dio that integrates with AIA Chaser.
 ///
@@ -45,12 +46,26 @@ class AiaDioAdapter implements HttpClientAdapter {
         rethrow;
       }
 
-      // Check if we can validate the host via prewarm
-      final port = options.uri.hasPort ? options.uri.port : 443;
-      final result = await AiaChaser.prewarm(host, port: port);
+      if (kDebugMode) {
+        print('[AiaDioAdapter] TLS handshake failed for $host. Resolving certificate chain...');
+      }
+
+      // Check if an in-flight validation is already processing for this host
+      final inFlight = AiaChaser.engine.getInFlightForHost(host);
+      final ValidationResult result;
+      if (inFlight != null) {
+        result = await inFlight;
+      } else {
+        final port = options.uri.hasPort ? options.uri.port : 443;
+        result = await AiaChaser.prewarm(host, port: port);
+      }
 
       if (result.outcome == ValidationOutcome.validated ||
           result.outcome == ValidationOutcome.validatedByPin) {
+        if (kDebugMode) {
+          print('[AiaDioAdapter] Certificate chain validated for $host. Retrying request...');
+        }
+
         // Re-attempt request once
         // Note: streaming request bodies that are already consumed cannot be retried
         if (requestStream != null && options.data is Stream) {
@@ -67,9 +82,16 @@ class AiaDioAdapter implements HttpClientAdapter {
         if (options.data is List<int>) {
           retryStream =
               Stream.value(Uint8List.fromList(options.data as List<int>));
+        } else if (options.data is String) {
+          retryStream =
+              Stream.value(Uint8List.fromList(utf8.encode(options.data as String)));
         }
 
         return await _inner.fetch(options, retryStream, cancelFuture);
+      }
+
+      if (kDebugMode) {
+        print('[AiaDioAdapter] Validation outcome for $host: ${result.outcome} (${result.detail})');
       }
 
       rethrow;

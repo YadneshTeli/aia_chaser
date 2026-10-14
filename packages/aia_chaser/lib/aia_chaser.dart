@@ -44,7 +44,7 @@ class AiaChaser {
 
   /// Configures and initializes AIA Chaser.
   static Future<void> initialize(AiaConfig config) async {
-    _engine.initialize(config);
+    await _engine.initialize(config);
   }
 
   /// Resets configuration, active validation state, and memory cache.
