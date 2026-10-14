@@ -1,0 +1,24 @@
+name: aia_chaser_webview
+description: Android WebView SSL error handler integration for aia_chaser, safely resolving SSL_UNTRUSTED errors via AIA chasing.
+version: 0.1.0-alpha.1
+publish_to: none
+homepage: https://github.com/aiachaser/aia_chaser
+repository: https://github.com/aiachaser/aia_chaser
+license: BSD-3-Clause
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  aia_chaser:
+    path: ../aia_chaser
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

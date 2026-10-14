@@ -1,0 +1,17 @@
+name: aia_chaser_workspace
+
+packages:
+  - 'packages/*'
+
+scripts:
+  analyze:
+    run: melos exec -- "flutter analyze"
+    description: Run flutter analyze across all packages.
+
+  test:
+    run: melos exec --dir-exists="test" -- "flutter test"
+    description: Run flutter test in packages with a test folder.
+
+  pigeon:
+    run: dart run pigeon --input packages/aia_chaser/pigeons/aia_api.dart
+    description: Regenerate Pigeon IPC bindings for Android and Dart.

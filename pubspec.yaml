@@ -1,0 +1,9 @@
+name: aia_chaser_workspace
+description: Workspace repository for the aia_chaser Flutter plugin ecosystem.
+publish_to: none
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dev_dependencies:
+  melos: ^8.9.0

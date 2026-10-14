@@ -1,0 +1,32 @@
+name: aia_chaser
+description: Automatically chases missing intermediate SSL/TLS certificates via AIA, validates full chains with system trust, and fixes handshake failures in Flutter.
+version: 0.1.0-alpha.1
+homepage: https://github.com/aiachaser/aia_chaser
+repository: https://github.com/aiachaser/aia_chaser
+issue_tracker: https://github.com/aiachaser/aia_chaser/issues
+license: BSD-3-Clause
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.8
+  crypto: ^3.0.6
+  meta: ^1.15.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  pigeon: ^24.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: dev.aiachaser
+        pluginClass: AiaChaserPlugin
