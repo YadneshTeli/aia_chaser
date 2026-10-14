@@ -7,6 +7,7 @@ environment:
 
 workspace:
   - packages/aia_chaser
+  - packages/aia_chaser/example
   - packages/aia_chaser_webview
   - packages/aia_chaser_dio
   - packages/aia_chaser_http
