@@ -1,6 +1,6 @@
 name: aia_chaser_dio
 description: Dio HTTP client adapter for aia_chaser, enabling scoped AIA intermediate certificate chasing and transparent retry-once.
-version: 0.1.0-alpha.1
+version: 0.1.0
 homepage: https://github.com/YadneshTeli/aia_chaser
 repository: https://github.com/YadneshTeli/aia_chaser/tree/master/packages/aia_chaser_dio
 issue_tracker: https://github.com/YadneshTeli/aia_chaser/issues
@@ -14,7 +14,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  aia_chaser: ^0.1.0-alpha.1
+  aia_chaser: ^0.1.0
   dio: ^5.7.0
 
 dev_dependencies:

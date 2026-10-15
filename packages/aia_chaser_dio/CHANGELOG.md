@@ -1,3 +1,9 @@
+## 0.1.0
+
+* First stable release of `aia_chaser_dio`.
+* Updated dependency to stable `aia_chaser: ^0.1.0`.
+* Automatic retry-once on incomplete SSL certificate chains with Dio.
+
 ## 0.1.0-alpha.1
 
 * Initial alpha release of `aia_chaser_dio`.

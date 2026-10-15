@@ -63,7 +63,7 @@ Suggested Fix:
 Add `aia_chaser` to your `pubspec.yaml`:
 ```yaml
 dependencies:
-  aia_chaser: ^0.1.0-alpha.1
+  aia_chaser: ^0.1.0
 ```
 
 Initialize AIA Chaser in your `main()` before `runApp()`:
@@ -107,7 +107,7 @@ final client = AiaHttpClientFactory.create();
 ### 2. Android WebView (`aia_chaser_webview`)
 ```yaml
 dependencies:
-  aia_chaser_webview: ^0.1.0-alpha.1
+  aia_chaser_webview: ^0.1.0
 ```
 
 ```dart
@@ -126,7 +126,7 @@ if (controller.platform is AndroidWebViewController) {
 ### 3. Dio (`aia_chaser_dio`)
 ```yaml
 dependencies:
-  aia_chaser_dio: ^0.1.0-alpha.1
+  aia_chaser_dio: ^0.1.0
 ```
 
 ```dart
@@ -140,7 +140,7 @@ dio.httpClientAdapter = AiaDioAdapter(); // Handles AIA chasing and automatic re
 ### 4. `package:http` (`aia_chaser_http`)
 ```yaml
 dependencies:
-  aia_chaser_http: ^0.1.0-alpha.1
+  aia_chaser_http: ^0.1.0
 ```
 
 ```dart

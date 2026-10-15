@@ -33,8 +33,8 @@ Add `aia_chaser` and `aia_chaser_webview` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  aia_chaser: ^0.1.0-alpha.1
-  aia_chaser_webview: ^0.1.0-alpha.1
+  aia_chaser: ^0.1.0
+  aia_chaser_webview: ^0.1.0
   webview_flutter: ^4.10.0
   webview_flutter_android: ^4.7.0
 ```

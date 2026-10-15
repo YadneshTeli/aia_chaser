@@ -30,10 +30,10 @@ client.badCertificateCallback = (cert, host, port) => true;
 
 | Package | Version | Description |
 | :--- | :--- | :--- |
-| [`packages/aia_chaser`](./packages/aia_chaser) | `0.1.0-alpha.1` | **Core Engine:** Native Android engine, Pigeon IPC, Dart policy manager, LRU disk cache, isolate worker support, and diagnostic visualizer. |
-| [`packages/aia_chaser_webview`](./packages/aia_chaser_webview) | `0.1.0-alpha.1` | **WebView Integration:** Intercepts Android WebView `onReceivedSslError`, validating chains before calling `proceed()`. |
-| [`packages/aia_chaser_dio`](./packages/aia_chaser_dio) | `0.1.0-alpha.1` | **Dio Adapter:** Custom `HttpClientAdapter` wrapping `IOHttpClientAdapter` with transparent retry-once resilience. |
-| [`packages/aia_chaser_http`](./packages/aia_chaser_http) | `0.1.0-alpha.1` | **HTTP Client:** Drop-in `http.BaseClient` for `package:http` with automatic AIA recovery. |
+| [`packages/aia_chaser`](./packages/aia_chaser) | `0.1.0` | **Core Engine:** Native Android engine, Pigeon IPC, Dart policy manager, LRU disk cache, isolate worker support, and diagnostic visualizer. |
+| [`packages/aia_chaser_webview`](./packages/aia_chaser_webview) | `0.1.0` | **WebView Integration:** Intercepts Android WebView `onReceivedSslError`, validating chains before calling `proceed()`. |
+| [`packages/aia_chaser_dio`](./packages/aia_chaser_dio) | `0.1.0` | **Dio Adapter:** Custom `HttpClientAdapter` wrapping `IOHttpClientAdapter` with transparent retry-once resilience. |
+| [`packages/aia_chaser_http`](./packages/aia_chaser_http) | `0.1.0` | **HTTP Client:** Drop-in `http.BaseClient` for `package:http` with automatic AIA recovery. |
 
 ---
 

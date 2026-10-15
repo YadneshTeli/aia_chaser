@@ -27,8 +27,8 @@ Add `aia_chaser` and `aia_chaser_dio` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  aia_chaser: ^0.1.0-alpha.1
-  aia_chaser_dio: ^0.1.0-alpha.1
+  aia_chaser: ^0.1.0
+  aia_chaser_dio: ^0.1.0
   dio: ^5.7.0
 ```
 
