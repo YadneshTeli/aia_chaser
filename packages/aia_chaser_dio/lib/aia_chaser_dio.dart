@@ -47,7 +47,8 @@ class AiaDioAdapter implements HttpClientAdapter {
       }
 
       if (kDebugMode) {
-        print('[AiaDioAdapter] TLS handshake failed for $host. Resolving certificate chain...');
+        print(
+            '[AiaDioAdapter] TLS handshake failed for $host. Resolving certificate chain...');
       }
 
       // Check if an in-flight validation is already processing for this host
@@ -63,7 +64,8 @@ class AiaDioAdapter implements HttpClientAdapter {
       if (result.outcome == ValidationOutcome.validated ||
           result.outcome == ValidationOutcome.validatedByPin) {
         if (kDebugMode) {
-          print('[AiaDioAdapter] Certificate chain validated for $host. Retrying request...');
+          print(
+              '[AiaDioAdapter] Certificate chain validated for $host. Retrying request...');
         }
 
         // Re-attempt request once
@@ -83,15 +85,16 @@ class AiaDioAdapter implements HttpClientAdapter {
           retryStream =
               Stream.value(Uint8List.fromList(options.data as List<int>));
         } else if (options.data is String) {
-          retryStream =
-              Stream.value(Uint8List.fromList(utf8.encode(options.data as String)));
+          retryStream = Stream.value(
+              Uint8List.fromList(utf8.encode(options.data as String)));
         }
 
         return await _inner.fetch(options, retryStream, cancelFuture);
       }
 
       if (kDebugMode) {
-        print('[AiaDioAdapter] Validation outcome for $host: ${result.outcome} (${result.detail})');
+        print(
+            '[AiaDioAdapter] Validation outcome for $host: ${result.outcome} (${result.detail})');
       }
 
       rethrow;

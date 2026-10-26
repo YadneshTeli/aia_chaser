@@ -136,8 +136,7 @@ class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _httpStatus =
-              'FAILED (${stopwatch.elapsedMilliseconds}ms): $e';
+          _httpStatus = 'FAILED (${stopwatch.elapsedMilliseconds}ms): $e';
         });
       }
     }
@@ -177,7 +176,8 @@ class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
     AiaChaser.clearCaches(scope: ClearScope.all);
     _refreshStats();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('AIA Chaser memory and disk cache cleared.')),
+      const SnackBar(
+          content: Text('AIA Chaser memory and disk cache cleared.')),
     );
   }
 
@@ -238,8 +238,8 @@ class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
                       children: [
                         ActionChip(
                           label: const Text('register.acrex.in'),
-                          onPressed: () => setState(() =>
-                              _hostController.text = 'register.acrex.in'),
+                          onPressed: () => setState(
+                              () => _hostController.text = 'register.acrex.in'),
                         ),
                         ActionChip(
                           label: const Text('acrex.in'),

@@ -13,7 +13,8 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler(
       'dev.flutter.pigeon.aia_chaser.AiaChaserHostApi.configure',
-      (message) async => const StandardMessageCodec().encodeMessage(<Object?>[null]),
+      (message) async =>
+          const StandardMessageCodec().encodeMessage(<Object?>[null]),
     );
 
     await AiaChaser.initialize(AiaConfig(

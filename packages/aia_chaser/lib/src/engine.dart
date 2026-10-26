@@ -37,7 +37,8 @@ class AiaEngine implements AiaChaserFlutterApi {
     for (final asset in config.cache.seedAssets) {
       try {
         final data = await rootBundle.load(asset);
-        seedCertsDer.add(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+        seedCertsDer.add(
+            data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
       } catch (e) {
         if (kDebugMode) {
           debugPrint('[AiaChaser] Could not load seed asset "$asset": $e');
@@ -67,7 +68,8 @@ class AiaEngine implements AiaChaserFlutterApi {
 
     // Handle prewarm
     if (config.prewarm != PrewarmMode.none) {
-      final future = _executePrewarm(config.prewarm == PrewarmMode.awaitCompletion);
+      final future =
+          _executePrewarm(config.prewarm == PrewarmMode.awaitCompletion);
       if (config.prewarm == PrewarmMode.awaitCompletion) {
         await future;
       }
@@ -167,7 +169,8 @@ class AiaEngine implements AiaChaserFlutterApi {
 
       completer.complete(result);
       if (kDebugMode) {
-        debugPrint('[AiaChaser] Validation completed for $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
+        debugPrint(
+            '[AiaChaser] Validation completed for $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
       }
     }).catchError((error, stackTrace) {
       completer.completeError(error, stackTrace);
@@ -213,7 +216,8 @@ class AiaEngine implements AiaChaserFlutterApi {
     }
 
     if (kDebugMode) {
-      debugPrint('[AiaChaser] Prewarmed $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
+      debugPrint(
+          '[AiaChaser] Prewarmed $host -> ${result.outcome} (${result.durationMs}ms - ${result.detail})');
     }
 
     _eventsController.add(AiaEvent(
