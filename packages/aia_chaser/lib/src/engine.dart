@@ -29,10 +29,9 @@ class AiaEngine implements AiaChaserFlutterApi {
 
   Future<void> initialize(AiaConfig config) async {
     config.validate();
-    _config = config;
-    _initialized = true;
 
     // Flutter asset keys are not filesystem paths, so load the bytes here.
+    // A configured seed that cannot be loaded is a configuration error.
     final seedCertsDer = <Uint8List>[];
     for (final asset in config.cache.seedAssets) {
       try {
@@ -40,11 +39,13 @@ class AiaEngine implements AiaChaserFlutterApi {
         seedCertsDer.add(
             data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
       } catch (e) {
-        if (kDebugMode) {
-          debugPrint('[AiaChaser] Could not load seed asset "$asset": $e');
-        }
+        throw AiaConfigurationException(
+            'Could not load seed certificate asset "$asset": $e');
       }
     }
+
+    _config = config;
+    _initialized = true;
 
     // Send native configuration
     await _hostApi.configure(NativeConfig(

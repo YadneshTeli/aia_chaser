@@ -128,6 +128,9 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
             maxDepth = fetchOpts.maxDepth.toInt()
         )
         prober = Prober(chainBuilder, trustValidator)
+
+        // Verdicts cached under the previous configuration must not be reused.
+        validationCache.clear()
     }
 
     override fun validate(request: ValidationRequest, callback: (Result<ValidationResult>) -> Unit) {

@@ -15,6 +15,8 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
     private let binaryMessenger: FlutterBinaryMessenger?
     private var flutterApi: AiaChaserFlutterApi?
     private var customAnchors: [SecCertificate] = []
+    // Incremented by configure(); stale validations must not write the verdict cache.
+    private var configGeneration = 0
     private var inMemoryVerdicts: [String: CachedVerdict] = [:]
     private let lock = NSLock()
     private let queue = DispatchQueue(label: "dev.aiachaser.validation", qos: .userInitiated, attributes: .concurrent)
@@ -46,6 +48,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         defer { lock.unlock() }
 
         customAnchors.removeAll()
+        configGeneration += 1
         // Verdicts were computed against the previous anchors; drop them.
         inMemoryVerdicts.removeAll()
         for path in config.seedCertPaths {
@@ -121,6 +124,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
 
             self.lock.lock()
             let anchors = self.customAnchors
+            let generation = self.configGeneration
             self.lock.unlock()
 
             if !anchors.isEmpty {
@@ -176,13 +180,15 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
 
             let ttl: TimeInterval = (outcome == .validated || outcome == .validatedByPin) ? 86400 : 60
             self.lock.lock()
-            self.inMemoryVerdicts[cacheKey] = CachedVerdict(
-                outcome: outcome,
-                chainSha256Hex: chainSha256,
-                fetchedUrls: [],
-                expiresAt: Date().addingTimeInterval(ttl),
-                detail: detail
-            )
+            if generation == self.configGeneration {
+                self.inMemoryVerdicts[cacheKey] = CachedVerdict(
+                    outcome: outcome,
+                    chainSha256Hex: chainSha256,
+                    fetchedUrls: [],
+                    expiresAt: Date().addingTimeInterval(ttl),
+                    detail: detail
+                )
+            }
             self.lock.unlock()
 
             self.emitEvent(
@@ -232,7 +238,10 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
             sessionConfig.timeoutIntervalForRequest = 10.0
             sessionConfig.timeoutIntervalForResource = 10.0
 
-            let delegate = PrewarmChallengeDelegate(host: cleanHost)
+            self.lock.lock()
+            let anchors = self.customAnchors
+            self.lock.unlock()
+            let delegate = PrewarmChallengeDelegate(host: cleanHost, anchors: anchors)
             let session = URLSession(configuration: sessionConfig, delegate: delegate, delegateQueue: nil)
             var request = URLRequest(url: url)
             request.httpMethod = "HEAD"
@@ -299,7 +308,10 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
             sessionConfig.timeoutIntervalForRequest = timeoutSeconds
             sessionConfig.timeoutIntervalForResource = timeoutSeconds
 
-            let delegate = DiagnoseChallengeDelegate(host: cleanHost)
+            self.lock.lock()
+            let anchors = self.customAnchors
+            self.lock.unlock()
+            let delegate = DiagnoseChallengeDelegate(host: cleanHost, anchors: anchors)
             let session = URLSession(configuration: sessionConfig, delegate: delegate, delegateQueue: nil)
             var request = URLRequest(url: url)
             request.httpMethod = "HEAD"
@@ -407,8 +419,11 @@ private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
     var discoveredChainSha256: [String] = []
     var lastErrorDetail: String?
 
-    init(host: String) {
+    let anchors: [SecCertificate]
+
+    init(host: String, anchors: [SecCertificate]) {
         self.host = host
+        self.anchors = anchors
     }
 
     func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
@@ -421,6 +436,10 @@ private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
         let policy = SecPolicyCreateSSL(true, host as CFString)
         SecTrustSetPolicies(trust, policy)
         SecTrustSetNetworkFetchAllowed(trust, true)
+        if !anchors.isEmpty {
+            SecTrustSetAnchorCertificates(trust, anchors as CFArray)
+            SecTrustSetAnchorCertificatesOnly(trust, false)
+        }
 
         var evalError: CFError?
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)
@@ -457,8 +476,11 @@ private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
     var completedCerts: [CertInfo] = []
     var lastErrorDetail: String?
 
-    init(host: String) {
+    let anchors: [SecCertificate]
+
+    init(host: String, anchors: [SecCertificate]) {
         self.host = host
+        self.anchors = anchors
     }
 
     func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
@@ -500,6 +522,10 @@ private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
         let policy = SecPolicyCreateSSL(true, host as CFString)
         SecTrustSetPolicies(trust, policy)
         SecTrustSetNetworkFetchAllowed(trust, true)
+        if !anchors.isEmpty {
+            SecTrustSetAnchorCertificates(trust, anchors as CFArray)
+            SecTrustSetAnchorCertificatesOnly(trust, false)
+        }
 
         var evalError: CFError?
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)

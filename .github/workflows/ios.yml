@@ -30,6 +30,7 @@ jobs:
           fi
 
       - name: Get dependencies
+        working-directory: packages/aia_chaser/example
         run: flutter pub get
 
       - name: Build iOS example
