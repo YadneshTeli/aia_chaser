@@ -41,20 +41,27 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         AiaChaserHostApiSetup.setUp(binaryMessenger: messenger, api: instance)
     }
 
-    public func configure(config: NativeConfig) throws {
+    func configure(config: NativeConfig) throws {
         lock.lock()
         defer { lock.unlock() }
 
         customAnchors.removeAll()
+        // Verdicts were computed against the previous anchors; drop them.
+        inMemoryVerdicts.removeAll()
         for path in config.seedCertPaths {
             if let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
                let cert = SecCertificateCreateWithData(nil, data as CFData) {
                 customAnchors.append(cert)
             }
         }
+        for typed in config.seedCertsDer {
+            if let cert = SecCertificateCreateWithData(nil, typed.data as CFData) {
+                customAnchors.append(cert)
+            }
+        }
     }
 
-    public func validate(request: ValidationRequest, completion: @escaping (Result<ValidationResult, Error>) -> Void) {
+    func validate(request: ValidationRequest, completion: @escaping (Result<ValidationResult, Error>) -> Void) {
         let certData = request.leafDer.data
         guard let leafCert = SecCertificateCreateWithData(nil, certData as CFData) else {
             let res = ValidationResult(
@@ -201,7 +208,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         }
     }
 
-    public func prewarm(host: String, port: Int64, completion: @escaping (Result<ValidationResult, Error>) -> Void) {
+    func prewarm(host: String, port: Int64, completion: @escaping (Result<ValidationResult, Error>) -> Void) {
         queue.async { [weak self] in
             guard let self = self else { return }
             let startTime = DispatchTime.now()
@@ -230,15 +237,23 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
             var request = URLRequest(url: url)
             request.httpMethod = "HEAD"
 
-            let task = session.dataTask(with: request) { _, _, _ in
+            let task = session.dataTask(with: request) { _, _, error in
+                session.finishTasksAndInvalidate()
                 let elapsedNs = DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds
                 let elapsedMs = Int64(Double(elapsedNs) / 1_000_000.0)
 
-                let outcome = delegate.evaluationPassed ? ValidationOutcome.validated : ValidationOutcome.rejectedUntrusted
+                let outcome: ValidationOutcome
+                let detail: String
+                if delegate.evaluated {
+                    outcome = delegate.evaluationPassed ? .validated : .rejectedUntrusted
+                    detail = delegate.evaluationPassed
+                        ? "TLS prewarm handshake and trust chain evaluation completed"
+                        : (delegate.lastErrorDetail ?? "TLS prewarm evaluation failed")
+                } else {
+                    outcome = .aiaFetchFailed
+                    detail = "Network error before TLS trust evaluation: \(error?.localizedDescription ?? "unknown")"
+                }
                 let hashes = delegate.discoveredChainSha256
-                let detail = delegate.evaluationPassed
-                    ? "TLS prewarm handshake and trust chain evaluation completed"
-                    : (delegate.lastErrorDetail ?? "TLS prewarm evaluation failed")
 
                 let res = ValidationResult(
                     outcome: outcome,
@@ -256,7 +271,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         }
     }
 
-    public func diagnose(host: String, port: Int64, timeoutMs: Int64, completion: @escaping (Result<ChainReport, Error>) -> Void) {
+    func diagnose(host: String, port: Int64, timeoutMs: Int64, completion: @escaping (Result<ChainReport, Error>) -> Void) {
         queue.async { [weak self] in
             guard let self = self else { return }
             let startTime = DispatchTime.now()
@@ -289,7 +304,8 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
             var request = URLRequest(url: url)
             request.httpMethod = "HEAD"
 
-            let task = session.dataTask(with: request) { _, _, _ in
+            let task = session.dataTask(with: request) { _, _, error in
+                session.finishTasksAndInvalidate()
                 let elapsedNs = DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds
                 let elapsedMs = Int64(Double(elapsedNs) / 1_000_000.0)
 
@@ -301,7 +317,11 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
                 let cause: String
                 let fix: String
 
-                if isOk {
+                if !delegate.evaluated {
+                    outcome = .aiaFetchFailed
+                    cause = "Network error before TLS trust evaluation: \(error?.localizedDescription ?? "unknown")"
+                    fix = "Check connectivity, DNS, hostname and port, then retry."
+                } else if isOk {
                     outcome = .validated
                     if fullChain.count > serverChain.count {
                         cause = "Server omitted intermediate certificate(s); AIA chasing resolved full chain."
@@ -335,7 +355,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         }
     }
 
-    public func getCacheStats() throws -> CacheStats {
+    func getCacheStats() throws -> CacheStats {
         lock.lock()
         defer { lock.unlock() }
         let count = Int64(inMemoryVerdicts.count)
@@ -346,7 +366,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
         )
     }
 
-    public func clearCaches(scope: ClearScope) throws {
+    func clearCaches(scope: ClearScope) throws {
         lock.lock()
         inMemoryVerdicts.removeAll()
         lock.unlock()
@@ -382,6 +402,7 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
 
 private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
     let host: String
+    var evaluated = false
     var evaluationPassed = false
     var discoveredChainSha256: [String] = []
     var lastErrorDetail: String?
@@ -403,6 +424,7 @@ private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
 
         var evalError: CFError?
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)
+        evaluated = true
         if let err = evalError {
             lastErrorDetail = (err as NSError).localizedDescription
         }
@@ -419,12 +441,17 @@ private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
             }
         }
 
-        completionHandler(.useCredential, URLCredential(trust: trust))
+        if evaluationPassed {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
     }
 }
 
 private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
     let host: String
+    var evaluated = false
     var evaluationPassed = false
     var serverSentCerts: [CertInfo] = []
     var completedCerts: [CertInfo] = []
@@ -476,6 +503,7 @@ private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
 
         var evalError: CFError?
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)
+        evaluated = true
         if let err = evalError {
             lastErrorDetail = (err as NSError).localizedDescription
         }
@@ -515,6 +543,10 @@ private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
             }
         }
 
-        completionHandler(.useCredential, URLCredential(trust: trust))
+        if evaluationPassed {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
     }
 }

@@ -169,6 +169,7 @@ struct NativeConfig {
   var cache: NativeCacheOptions
   var trustUserCaCerts: Bool
   var seedCertPaths: [String]
+  var seedCertsDer: [FlutterStandardTypedData]
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -177,12 +178,14 @@ struct NativeConfig {
     let cache = pigeonVar_list[1] as! NativeCacheOptions
     let trustUserCaCerts = pigeonVar_list[2] as! Bool
     let seedCertPaths = pigeonVar_list[3] as! [String]
+    let seedCertsDer = pigeonVar_list[4] as! [FlutterStandardTypedData]
 
     return NativeConfig(
       fetch: fetch,
       cache: cache,
       trustUserCaCerts: trustUserCaCerts,
-      seedCertPaths: seedCertPaths
+      seedCertPaths: seedCertPaths,
+      seedCertsDer: seedCertsDer
     )
   }
   func toList() -> [Any?] {
@@ -191,6 +194,7 @@ struct NativeConfig {
       cache,
       trustUserCaCerts,
       seedCertPaths,
+      seedCertsDer,
     ]
   }
 }

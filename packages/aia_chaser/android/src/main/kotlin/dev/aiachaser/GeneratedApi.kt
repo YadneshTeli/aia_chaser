@@ -156,7 +156,8 @@ data class NativeConfig (
   val fetch: NativeFetchOptions,
   val cache: NativeCacheOptions,
   val trustUserCaCerts: Boolean,
-  val seedCertPaths: List<String>
+  val seedCertPaths: List<String>,
+  val seedCertsDer: List<ByteArray>
 )
  {
   companion object {
@@ -165,7 +166,8 @@ data class NativeConfig (
       val cache = pigeonVar_list[1] as NativeCacheOptions
       val trustUserCaCerts = pigeonVar_list[2] as Boolean
       val seedCertPaths = pigeonVar_list[3] as List<String>
-      return NativeConfig(fetch, cache, trustUserCaCerts, seedCertPaths)
+      val seedCertsDer = pigeonVar_list[4] as List<ByteArray>
+      return NativeConfig(fetch, cache, trustUserCaCerts, seedCertPaths, seedCertsDer)
     }
   }
   fun toList(): List<Any?> {
@@ -174,6 +176,7 @@ data class NativeConfig (
       cache,
       trustUserCaCerts,
       seedCertPaths,
+      seedCertsDer,
     )
   }
 }

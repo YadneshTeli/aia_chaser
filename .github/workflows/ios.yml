@@ -1,0 +1,37 @@
+name: iOS build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build-ios:
+    name: iOS example (${{ matrix.package-manager }})
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package-manager: [swiftpm, cocoapods]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Select package manager
+        run: |
+          if [ "${{ matrix.package-manager }}" = "swiftpm" ]; then
+            flutter config --enable-swift-package-manager
+          else
+            flutter config --no-enable-swift-package-manager
+          fi
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS example
+        working-directory: packages/aia_chaser/example
+        run: flutter build ios --no-codesign

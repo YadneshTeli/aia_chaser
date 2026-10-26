@@ -55,6 +55,7 @@ class NativeConfig {
   late NativeCacheOptions cache;
   late bool trustUserCaCerts;
   late List<String> seedCertPaths;
+  late List<Uint8List> seedCertsDer;
 }
 
 class ValidationRequest {

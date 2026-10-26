@@ -20,7 +20,8 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
     private var context: Context? = null
     private var flutterApi: AiaChaserFlutterApi? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val executor = Executors.newFixedThreadPool(4)
+    @Volatile
+    private var executor = Executors.newFixedThreadPool(4)
     private val certFactory = CertificateFactory.getInstance("X.509")
 
     private var fetcher = AiaFetcher()
@@ -46,6 +47,9 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
     private val singleFlightLock = Any()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        if (executor.isShutdown) {
+            executor = Executors.newFixedThreadPool(4)
+        }
         context = binding.applicationContext
         flutterApi = AiaChaserFlutterApi(binding.binaryMessenger)
         AiaChaserHostApi.setUp(binding.binaryMessenger, this)
@@ -103,6 +107,15 @@ class AiaChaserPlugin : FlutterPlugin, AiaChaserHostApi {
                             }
                         }
                     }
+                }
+            } catch (_: Exception) {}
+        }
+
+        for (der in config.seedCertsDer) {
+            try {
+                val c = certFactory.generateCertificate(ByteArrayInputStream(der))
+                if (c is X509Certificate) {
+                    seedCertificates.add(c)
                 }
             } catch (_: Exception) {}
         }

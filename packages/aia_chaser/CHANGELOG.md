@@ -3,6 +3,11 @@
 * Added full Swift Package Manager (SPM) support on iOS (`ios/aia_chaser/Package.swift`) alongside CocoaPods (`ios/aia_chaser.podspec`) dual-support structure for Flutter 3.24+.
 * Implemented native Apple `Security` framework evaluation (`SecTrust`, `SecPolicyCreateSSL`, `SecTrustEvaluateWithError`, `SecTrustSetNetworkFetchAllowed`) for cryptographic trust verification, active TLS prewarming, and detailed chain diagnostics on iOS.
 * Upgraded iOS minimum deployment target to iOS 13.0 across podspec and SwiftPM.
+* Fixed `AiaCacheOptions.seedAssets`: assets are now loaded with `rootBundle` and passed to native as bytes (previously the asset keys were treated as file paths and silently ignored).
+* iOS: probe sessions now cancel on failed trust, are invalidated after use, and network failures are reported as `aiaFetchFailed` instead of an untrusted-chain verdict.
+* Android: the worker executor is recreated when the plugin is re-attached to an engine.
+* Android: removed the redundant `package` attribute from the library manifest (namespace is set in Gradle).
+* Added a GitHub Actions workflow that builds the iOS example with both Swift Package Manager and CocoaPods.
 
 ## 0.1.0
 

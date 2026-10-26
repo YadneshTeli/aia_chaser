@@ -135,6 +135,7 @@ class NativeConfig {
     required this.cache,
     required this.trustUserCaCerts,
     required this.seedCertPaths,
+    required this.seedCertsDer,
   });
 
   NativeFetchOptions fetch;
@@ -145,12 +146,15 @@ class NativeConfig {
 
   List<String> seedCertPaths;
 
+  List<Uint8List> seedCertsDer;
+
   Object encode() {
     return <Object?>[
       fetch,
       cache,
       trustUserCaCerts,
       seedCertPaths,
+      seedCertsDer,
     ];
   }
 
@@ -161,6 +165,7 @@ class NativeConfig {
       cache: result[1]! as NativeCacheOptions,
       trustUserCaCerts: result[2]! as bool,
       seedCertPaths: (result[3] as List<Object?>?)!.cast<String>(),
+      seedCertsDer: (result[4] as List<Object?>?)!.cast<Uint8List>(),
     );
   }
 }

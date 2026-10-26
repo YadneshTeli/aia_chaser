@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'config.dart';
 import 'events.dart';
@@ -31,6 +32,19 @@ class AiaEngine implements AiaChaserFlutterApi {
     _config = config;
     _initialized = true;
 
+    // Flutter asset keys are not filesystem paths, so load the bytes here.
+    final seedCertsDer = <Uint8List>[];
+    for (final asset in config.cache.seedAssets) {
+      try {
+        final data = await rootBundle.load(asset);
+        seedCertsDer.add(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[AiaChaser] Could not load seed asset "$asset": $e');
+        }
+      }
+    }
+
     // Send native configuration
     await _hostApi.configure(NativeConfig(
       fetch: NativeFetchOptions(
@@ -47,7 +61,8 @@ class AiaEngine implements AiaChaserFlutterApi {
         validationTtlMs: config.cache.validationTtl.inMilliseconds,
       ),
       trustUserCaCerts: config.trustUserCaCerts,
-      seedCertPaths: config.cache.seedAssets,
+      seedCertPaths: const [],
+      seedCertsDer: seedCertsDer,
     ));
 
     // Handle prewarm
