@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aia_chaser/src/pfn/aia_api.g.dart';
 
+
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -17,40 +18,40 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    } else if (value is ValidationOutcome) {
+    }    else if (value is ValidationOutcome) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    } else if (value is CertSource) {
+    }    else if (value is CertSource) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    } else if (value is ClearScope) {
+    }    else if (value is ClearScope) {
       buffer.putUint8(131);
       writeValue(buffer, value.index);
-    } else if (value is NativeFetchOptions) {
+    }    else if (value is NativeFetchOptions) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    } else if (value is NativeCacheOptions) {
+    }    else if (value is NativeCacheOptions) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    } else if (value is NativeConfig) {
+    }    else if (value is NativeConfig) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    } else if (value is ValidationRequest) {
+    }    else if (value is ValidationRequest) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    } else if (value is ValidationResult) {
+    }    else if (value is ValidationResult) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
-    } else if (value is CertInfo) {
+    }    else if (value is CertInfo) {
       buffer.putUint8(137);
       writeValue(buffer, value.encode());
-    } else if (value is ChainReport) {
+    }    else if (value is ChainReport) {
       buffer.putUint8(138);
       writeValue(buffer, value.encode());
-    } else if (value is CacheStats) {
+    }    else if (value is CacheStats) {
       buffer.putUint8(139);
       writeValue(buffer, value.encode());
-    } else if (value is NativeEvent) {
+    }    else if (value is NativeEvent) {
       buffer.putUint8(140);
       writeValue(buffer, value.encode());
     } else {
@@ -61,32 +62,32 @@ class _PigeonCodec extends StandardMessageCodec {
   @override
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
-      case 129:
+      case 129: 
         final int? value = readValue(buffer) as int?;
         return value == null ? null : ValidationOutcome.values[value];
-      case 130:
+      case 130: 
         final int? value = readValue(buffer) as int?;
         return value == null ? null : CertSource.values[value];
-      case 131:
+      case 131: 
         final int? value = readValue(buffer) as int?;
         return value == null ? null : ClearScope.values[value];
-      case 132:
+      case 132: 
         return NativeFetchOptions.decode(readValue(buffer)!);
-      case 133:
+      case 133: 
         return NativeCacheOptions.decode(readValue(buffer)!);
-      case 134:
+      case 134: 
         return NativeConfig.decode(readValue(buffer)!);
-      case 135:
+      case 135: 
         return ValidationRequest.decode(readValue(buffer)!);
-      case 136:
+      case 136: 
         return ValidationResult.decode(readValue(buffer)!);
-      case 137:
+      case 137: 
         return CertInfo.decode(readValue(buffer)!);
-      case 138:
+      case 138: 
         return ChainReport.decode(readValue(buffer)!);
-      case 139:
+      case 139: 
         return CacheStats.decode(readValue(buffer)!);
-      case 140:
+      case 140: 
         return NativeEvent.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);

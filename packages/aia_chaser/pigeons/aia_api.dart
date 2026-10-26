@@ -5,7 +5,7 @@ import 'package:pigeon/pigeon.dart';
   dartTestOut: 'test/pfn/test_aia_api.g.dart',
   kotlinOut: 'android/src/main/kotlin/dev/aiachaser/GeneratedApi.kt',
   kotlinOptions: KotlinOptions(package: 'dev.aiachaser'),
-  swiftOut: 'ios/Classes/GeneratedApi.swift',
+  swiftOut: 'ios/aia_chaser/Sources/aia_chaser/GeneratedApi.swift',
   swiftOptions: SwiftOptions(),
 ))
 enum ValidationOutcome {

@@ -1,3 +1,9 @@
+## 0.1.1
+
+* Added full Swift Package Manager (SPM) support on iOS (`ios/aia_chaser/Package.swift`) alongside CocoaPods (`ios/aia_chaser.podspec`) dual-support structure for Flutter 3.24+.
+* Implemented native Apple `Security` framework evaluation (`SecTrust`, `SecPolicyCreateSSL`, `SecTrustEvaluateWithError`, `SecTrustSetNetworkFetchAllowed`) for cryptographic trust verification, active TLS prewarming, and detailed chain diagnostics on iOS.
+* Upgraded iOS minimum deployment target to iOS 13.0 across podspec and SwiftPM.
+
 ## 0.1.0
 
 * First stable release of `aia_chaser`.
