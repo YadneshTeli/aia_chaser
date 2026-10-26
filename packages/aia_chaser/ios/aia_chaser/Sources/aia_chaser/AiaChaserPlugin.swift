@@ -160,18 +160,18 @@ public class AiaChaserPlugin: NSObject, FlutterPlugin, AiaChaserHostApi {
                 outcome = .validated
                 detail = "Full certificate chain verified and trusted by Apple Security framework"
             } else if let error = evalError {
-                let nsError = error as NSError
-                let desc = nsError.localizedDescription.lowercased()
-                let code = nsError.code
-                if code == -67818 || desc.contains("expired") || desc.contains("validity period") {
+                let desc = CFErrorCopyDescription(error) as String
+                let lowerDesc = desc.lowercased()
+                let code = CFErrorGetCode(error)
+                if code == -67818 || lowerDesc.contains("expired") || lowerDesc.contains("validity period") {
                     outcome = .rejectedExpired
-                    detail = "Certificate has expired or is not yet valid: \(nsError.localizedDescription)"
-                } else if code == -67602 || desc.contains("hostname") || desc.contains("name mismatch") {
+                    detail = "Certificate has expired or is not yet valid: \(desc)"
+                } else if code == -67602 || lowerDesc.contains("hostname") || lowerDesc.contains("name mismatch") {
                     outcome = .rejectedHostname
-                    detail = "Hostname mismatch for \(host): \(nsError.localizedDescription)"
+                    detail = "Hostname mismatch for \(host): \(desc)"
                 } else {
                     outcome = .rejectedUntrusted
-                    detail = "Certificate chain untrusted: \(nsError.localizedDescription)"
+                    detail = "Certificate chain untrusted: \(desc)"
                 }
             } else {
                 outcome = .rejectedUntrusted
@@ -445,7 +445,7 @@ private class PrewarmChallengeDelegate: NSObject, URLSessionDelegate {
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)
         evaluated = true
         if let err = evalError {
-            lastErrorDetail = (err as NSError).localizedDescription
+            lastErrorDetail = CFErrorCopyDescription(err) as String
         }
 
         let count = SecTrustGetCertificateCount(trust)
@@ -531,7 +531,7 @@ private class DiagnoseChallengeDelegate: NSObject, URLSessionDelegate {
         evaluationPassed = SecTrustEvaluateWithError(trust, &evalError)
         evaluated = true
         if let err = evalError {
-            lastErrorDetail = (err as NSError).localizedDescription
+            lastErrorDetail = CFErrorCopyDescription(err) as String
         }
 
         let finalCount = SecTrustGetCertificateCount(trust)
