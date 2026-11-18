@@ -4,14 +4,14 @@ import 'package:aia_chaser/aia_chaser.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
 
   // 1. Initialize AIA Chaser with validate-ahead policies
   await AiaChaser.initialize(
     const AiaConfig(
       hosts: {
-        'register.acrex.in': HostPolicy.chase(retryOnce: true),
-        'acrex.in': HostPolicy.chase(retryOnce: true),
-        '*.acrex.in': HostPolicy.chase(retryOnce: true),
+        'incomplete-chain.badssl.com': HostPolicy.chase(retryOnce: true),
+        '*.badssl.com': HostPolicy.chase(retryOnce: true),
       },
       prewarm: PrewarmMode.background,
     ),
@@ -30,6 +30,7 @@ class AiaChaserExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AIA Chaser Example',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -58,7 +59,7 @@ class AiaChaserHomeScreen extends StatefulWidget {
 
 class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
   final TextEditingController _hostController =
-      TextEditingController(text: 'register.acrex.in');
+      TextEditingController(text: 'incomplete-chain.badssl.com');
   ChainReport? _diagnosticReport;
   bool _isLoading = false;
   String? _httpStatus;
@@ -226,7 +227,7 @@ class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
                     TextField(
                       controller: _hostController,
                       decoration: const InputDecoration(
-                        hintText: 'e.g. register.acrex.in',
+                        hintText: 'e.g. incomplete-chain.badssl.com',
                         border: OutlineInputBorder(),
                         isDense: true,
                         prefixIcon: Icon(Icons.language),
@@ -237,14 +238,9 @@ class _AiaChaserHomeScreenState extends State<AiaChaserHomeScreen> {
                       spacing: 8,
                       children: [
                         ActionChip(
-                          label: const Text('register.acrex.in'),
-                          onPressed: () => setState(
-                              () => _hostController.text = 'register.acrex.in'),
-                        ),
-                        ActionChip(
-                          label: const Text('acrex.in'),
-                          onPressed: () =>
-                              setState(() => _hostController.text = 'acrex.in'),
+                          label: const Text('incomplete-chain.badssl.com'),
+                          onPressed: () => setState(() => _hostController.text =
+                              'incomplete-chain.badssl.com'),
                         ),
                       ],
                     ),

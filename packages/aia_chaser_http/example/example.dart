@@ -7,7 +7,7 @@ void main() async {
   await AiaChaser.initialize(
     const AiaConfig(
       hosts: {
-        'register.acrex.in': HostPolicy.chase(retryOnce: true),
+        'incomplete-chain.badssl.com': HostPolicy.chase(retryOnce: true),
       },
       prewarm: PrewarmMode.background,
     ),
@@ -19,7 +19,7 @@ void main() async {
   // 3. Make requests - transparently retries once if intermediate CA needs to be chased
   try {
     final response = await client.get(
-      Uri.parse('https://register.acrex.in/ACREXService.svc/GetSliderList'),
+      Uri.parse('https://incomplete-chain.badssl.com/'),
     );
     print('HTTP Status: ${response.statusCode}');
     print('Response: ${response.body}');

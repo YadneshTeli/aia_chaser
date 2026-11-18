@@ -330,14 +330,15 @@ class AiaDiagnosticsView extends StatelessWidget {
               children: [
                 const Icon(Icons.assessment_outlined, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Diagnosis & Suggested Fix',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                const Expanded(
+                  child: Text(
+                    'Diagnosis & Suggested Fix',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
-                const Spacer(),
                 TextButton.icon(
                   icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('Copy Report'),
+                  label: const Text('Copy'),
                   onPressed: () {
                     Clipboard.setData(
                         ClipboardData(text: report.toFormattedString()));

@@ -7,7 +7,7 @@ void main() async {
   await AiaChaser.initialize(
     const AiaConfig(
       hosts: {
-        'register.acrex.in': HostPolicy.chase(retryOnce: true),
+        'incomplete-chain.badssl.com': HostPolicy.chase(retryOnce: true),
       },
       prewarm: PrewarmMode.background,
     ),
@@ -20,7 +20,7 @@ void main() async {
   // 3. Make requests as normal - handshake failures trigger AIA chasing and transparent retry
   try {
     final response = await dio.get(
-      'https://register.acrex.in/ACREXService.svc/GetSliderList',
+      'https://incomplete-chain.badssl.com/',
     );
     print('Success: HTTP ${response.statusCode}');
     print('Data: ${response.data}');

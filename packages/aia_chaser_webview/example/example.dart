@@ -12,7 +12,7 @@ void main() async {
   await AiaChaser.initialize(
     const AiaConfig(
       hosts: {
-        'register.acrex.in': HostPolicy.chase(),
+        'incomplete-chain.badssl.com': HostPolicy.chase(),
       },
       prewarm: PrewarmMode.background,
     ),
@@ -51,7 +51,7 @@ class _WebViewExampleScreenState extends State<WebViewExampleScreen> {
       ..setNavigationDelegate(delegate)
       ..loadRequest(
         Uri.parse(
-          'https://register.acrex.in/hallLayout/ViewhallLayout.html?HallId=7&hallName=HALL+9',
+          'https://incomplete-chain.badssl.com/',
         ),
       );
   }
