@@ -1,3 +1,9 @@
+## 0.1.2
+
+* Fixed `RenderFlex` overflow in `AiaDiagnosticsView` on narrow screens by wrapping the header title in an `Expanded` widget.
+* Added `android:usesCleartextTraffic="true"` to the example app manifest so intermediate certificate downloads over HTTP (port 80) succeed on Android 9+ (API 28+).
+* Updated example app test host defaults to `incomplete-chain.badssl.com` and removed test domain artifacts.
+
 ## 0.1.1
 
 * Added full Swift Package Manager (SPM) support on iOS (`ios/aia_chaser/Package.swift`) alongside CocoaPods (`ios/aia_chaser.podspec`) dual-support structure for Flutter 3.24+.
